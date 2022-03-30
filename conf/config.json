@@ -1,0 +1,10 @@
+{
+    "simulation": "wordcount",
+    "collect_period": 630,
+    "num-workers": 1,
+    "wc-datasize": 100,
+    "wc-num-source": 1,
+    "wc-num-split": 1,
+    "wc-num-count": 1,
+    "wc-data-size": 100
+}
