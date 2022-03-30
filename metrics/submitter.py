@@ -14,7 +14,7 @@ class DockerStormSubmitter:
         self._client = docker.from_env()
         self._executed_topology = None
         self._init_signal_handler()
-        
+        self._nimbus_cont = None
         
     def _init_signal_handler(self):
         signal.signal(signal.SIGINT, self._shutdown)
@@ -22,6 +22,7 @@ class DockerStormSubmitter:
         
     def _shutdown(self, signum, frame):
         print(f'Shutdown: {signum}, {frame}')
+        self._kill_job()
         #subprocess.run(['docker-compose', '-f', f'{Path.cwd() / + "docker-compose-graphite.yml"}', 'down'], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
         #self._remove_path(DockerStormSubmitter.TMP_PATH)      
         exit(signum)  
@@ -74,30 +75,27 @@ class DockerStormSubmitter:
         return self._command_parser(args)
     
     
-    def _kill_job(self, nimbus):
-        cont = self._client.containers.get(nimbus)
-            
+    def _kill_job(self):            
         if self._executed_topology is not None:
-            res = cont.exec_run(['storm', 'kill', self._executed_topology])
+            res = self._nimbus_cont.exec_run(['storm', 'kill', '-w', str(0), self._executed_topology])
             if res[0] == 0:
                 print(f'Succeed to kill the topology {self._executed_topology}')
                 
     
-    def _submit_job(self, conf: dict, cap: float, nimbus):
+    def _submit_job(self, conf: dict, cap: float):
         """_summary_
 
         Args:
             exec_conf (_type_): _description_
         """
         
-        cont = self._client.containers.get(nimbus)
         if conf['simulation'] in DockerStormSubmitter.JOBS:
             command = None
             if conf['simulation'] == 'wordcount':
                 command = self._wc_job(conf, cap)
                 
             if command is not None:
-                res = cont.exec_run(command)
+                res = self._nimbus_cont.exec_run(command)
                 print(res)
                 if res[0] == 0:
                     print(f'Succeed to execute the topology {self._executed_topology}')
@@ -132,7 +130,7 @@ class DockerStormSubmitter:
     def _wait_for_job(self, conf):
         period = 630
         if 'period' in conf.keys():
-            period = conf['collect_period']
+            period = conf['period']
         
         print(f'Started the job, the below is progress bar up to {period} seconds')
         for _ in tqdm(range(100), ncols=100, desc=f'Job Progress'):
@@ -144,6 +142,10 @@ class DockerStormSubmitter:
         ps = subprocess.run(cmd, capture_output=True, check=True)
         result = ps.stdout.decode('utf8').split('\n')[2:]
         return [r.split(' ')[0] for r in result][:-1]
+    
+    
+    def _get_nimbus_container(self, nimbus):
+        return self._client.containers.get(nimbus)
     
     def _is_running(self, compose_path):
         cmd = ['docker-compose', '-f', compose_path, 'ps']
@@ -174,14 +176,16 @@ class DockerStormSubmitter:
         if self._is_running(compose_path):
             print('Start the docker-compose...')
             subprocess.run(['docker-compose', '-f', compose_path, 'up', '-d'])
+            print(f'Waiting for initializing the docker services..')
+            for _ in tqdm(range(10), ncols=100, desc=f'Initializing...'):
+                time.sleep(1)
         else:
             print('These are already running services...')
         print('=' * 100)
         
-        time.sleep(10)
-        
         # We suppose there is only one nimbus in the cluster
-        nimbus = self._get_nimbus_name(compose_path)[0]
+        nimbus_name = self._get_nimbus_name(compose_path)[0]
+        self._nimbus_cont = self._get_nimbus_container(nimbus_name)
         
         cnt = 0
         print('=' * 100)
@@ -192,9 +196,9 @@ class DockerStormSubmitter:
             
             # Get supervisor name in the docker-compose
             self._update_supervisor_cpus(cap)
-            self._submit_job(exec_conf, cap, nimbus)
+            self._submit_job(exec_conf, cap)
             self._wait_for_job(exec_conf) 
-            self._kill_job(nimbus)
+            self._kill_job()
             cnt += 1
             print('-' * 100)
         print('=' * 100)

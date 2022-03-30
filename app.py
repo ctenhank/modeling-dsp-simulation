@@ -29,7 +29,6 @@ if __name__ == "__main__":
         print('Created the default config.')
     
     
-    
     if args.network_metric:
         pass
     
