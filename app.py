@@ -10,7 +10,6 @@ if __name__ == "__main__":
     parser.add_argument('--network-metric', action='store_true')
     parser.add_argument('--storm-latency-metric', action='store_true')
     parser.add_argument('--config-file', type=str, default='./conf/config.json', help='Default is `./config/json`')
-    parser.add_argument('--data-dir', type=str, default='./data')
     parser.add_argument('--compose-path', type=str, default='./docker-compose-graphite.yml')
     args = parser.parse_args()
     
@@ -22,7 +21,6 @@ if __name__ == "__main__":
             exec_conf = json.dump({
                 "simulation": "wordcount",
                 "num-workers": 1,
-                "wc-datasize": 100,
                 "wc-num-source": 1,
                 "wc-num-split": 1,
                 "wc-num-count": 1,
@@ -31,7 +29,6 @@ if __name__ == "__main__":
         print('Created the default config.')
     
     
-    Path(args.data_dir).mkdir(exist_ok=True, parents=True)
     
     if args.network_metric:
         pass

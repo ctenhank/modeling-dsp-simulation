@@ -37,13 +37,6 @@ services:
 
     volumes:
       - ${PWD}/conf/storm.yaml:/conf/storm.yaml
-      - ${PWD}/data/storm:/data/storm
-
-    # CPU limitation
-    deploy:
-      resources:
-        limits:
-          cpus: 1.0
 
   ui:
     image: storm
@@ -61,7 +54,6 @@ services:
 
   graphite:
     image: graphiteapp/graphite-statsd
-    #container_name: graphite
     ports:
       - 80:80
       - 2003-2004:2003-2004

@@ -10,11 +10,10 @@ import logging
 
 class DockerStormSubmitter:
     JOBS = ['wordcount']
-    def __init__(self, datadir='./data/storm'):        
+    def __init__(self):        
         self._client = docker.from_env()
         self._executed_topology = None
         self._init_signal_handler()
-        Path(datadir).mkdir(exist_ok=True, parents=True)
         
         
     def _init_signal_handler(self):
@@ -127,9 +126,6 @@ class DockerStormSubmitter:
         conf['services']['nimbus']['volumes'][0] = str(Path.cwd() / 'conf' / 'storm' / 'storm.yaml') + ':/apache-storm-2.3.0/conf/storm.yaml' 
         conf['services']['supervisor']['volumes'][0] = str(Path.cwd() / 'conf' / 'storm' / 'storm.yaml') + ':/apache-storm-2.3.0/conf/storm.yaml' 
         conf['services']['ui']['volumes'][0] = str(Path.cwd() / 'conf' / 'storm' / 'storm.yaml') + ':/apache-storm-2.3.0/conf/storm.yaml' 
-        
-        # Latency data path
-        conf['services']['supervisor']['volumes'][1] = str(Path.cwd() / 'data' / 'storm') + ':/data/storm'
         return conf
     
     
@@ -181,6 +177,8 @@ class DockerStormSubmitter:
         else:
             print('These are already running services...')
         print('=' * 100)
+        
+        time.sleep(10)
         
         # We suppose there is only one nimbus in the cluster
         nimbus = self._get_nimbus_name(compose_path)[0]

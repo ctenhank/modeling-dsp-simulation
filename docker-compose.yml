@@ -36,14 +36,6 @@ services:
 
     volumes:
       - ${PWD}/conf/storm.yaml:/conf/storm.yaml
-      - ${PWD}/data/storm:/data/storm
-
-    # CPU limitation
-    deploy:
-      resources:
-        limits:
-          cpus: 1.0
-
   ui:
     image: storm
     hostname: storm-ui

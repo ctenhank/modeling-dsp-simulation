@@ -53,8 +53,28 @@ if __name__ == '__main__':
         
     #print(storm_indices)
     #req = graphite_url + f"/render/?target=summarize({storm_index[0]},'1hour','last')&from=-1h&format=json"
-    req = graphite_url + f"/render/?target={storm_index[0]}&format=json"
-    res = requests.get(req, auth=('root', 'root'))
+    lat = ['storm.worker.wc_50_100_1_1_1_1-1-1648630270.3f7bfd634442.count.default.3.6700-__execute-latency-split:default',
+        'storm.worker.wc_50_100_1_1_1_1-1-1648630270.3f7bfd634442.count.default.3.6700-__process-latency-split:default',
+        'storm.worker.wc_50_100_1_1_1_1-1-1648630270.3f7bfd634442.split.default.4.6700-__execute-latency-spout:default',
+        'storm.worker.wc_50_100_1_1_1_1-1-1648630270.3f7bfd634442.split.default.4.6700-__process-latency-spout:default']
+    #for index in storm_indices:
+    #    if 'latency' in index:
+            
+    #        print(index)
+    
+    for l in lat:
+        req = graphite_url + f"/render/?target={l}&format=json"
+        res = requests.get(req, auth=('root', 'root'))  
+        print(res.json()[0])
+        print(len(res.json()[0]['datapoints']))
+        
+            #
+    #req = graphite_url + f"/render/?target={storm_indices[0]}&format=json"
+    
+    #req = graphite_url + f"/render/?target=storm.worker.wc_50_100_1_1_1_1-1-1648630270.3f7bfd634442.count.default.3.6700-__execute-latency-split:default&format=json"
+    #res = requests.get(req, auth=('root', 'root'))
+    #print(res.json()[0])
+    #print(len(res.json()[0]['datapoints']))
     #print(res.json()[0])
             #indices.remove()
     #print(index)
