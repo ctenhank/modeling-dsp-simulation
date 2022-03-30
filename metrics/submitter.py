@@ -99,8 +99,13 @@ class DockerStormSubmitter:
                 
             if command is not None:
                 res = cont.exec_run(command)
+                print(res)
                 if res[0] == 0:
                     print(f'Succeed to execute the topology {self._executed_topology}')
+                    return True
+                #else:
+                
+        return False
         
         
     def _update_supervisor_cpus(self, cap):

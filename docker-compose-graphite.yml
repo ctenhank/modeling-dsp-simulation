@@ -5,6 +5,7 @@ services:
     image: zookeeper
     hostname: zookeeper_with_storm
     restart: always
+    
 
   nimbus:
     image: storm
@@ -19,13 +20,13 @@ services:
       - 6627:6627
 
     volumes:
-      - ${PWD}/conf/storm.yaml:/apache-storm-2.3.0/conf/storm.yaml
-      - ${PWD}/lib/storm-examples/jars:/jars
+      - ${PWD}/conf/storm.yaml:/conf/storm.yaml
+      - ${PWD}/jars:/jars
 
 
   supervisor:
     image: storm
-    command: storm supervisor -c worker.childopts="-Xmx%HEAP-MEM%m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=artifacts/heapdump"
+    command: storm supervisor
     depends_on:
       - nimbus
       - zookeeper
@@ -35,7 +36,7 @@ services:
     restart: always
 
     volumes:
-      - ${PWD}/conf/storm.yaml:/apache-storm-2.3.0/conf/storm.yaml
+      - ${PWD}/conf/storm.yaml:/conf/storm.yaml
       - ${PWD}/data/storm:/data/storm
 
     # CPU limitation
@@ -55,9 +56,8 @@ services:
     restart: always
     ports:
       - 8090:8080
-
     volumes:
-      - ${PWD}/conf/storm.yaml:/apache-storm-2.3.0/conf/storm.yaml
+      - ${PWD}/conf/storm.yaml:/conf/storm.yaml
 
   graphite:
     image: graphiteapp/graphite-statsd
@@ -69,6 +69,6 @@ services:
       - 8125:8125/udp
       - 8126:8126
     links:
-    - nimbus
-    - supervisor
+      - nimbus
+      - supervisor
     restart: always
