@@ -35,7 +35,10 @@ if __name__ == "__main__":
     if args.storm_latency_metric:
         submitter = DockerStormSubmitter()
         submitter.run(exec_conf,
-                      cpu_capacities=[0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.80, 0.85, 0.9, 0.95, 1.0, 1.05, 1.10, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5],
+                    #  cpu_capacities=[0.5, 1.0, 1.5],
+                      cpu_capacities=[0.5, 1.0, 1.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.80, 0.85, 0.9, 0.95, 1.05, 1.10, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45],
                       compose_path=args.compose_path,
+                    #  data_rate=[1000, 200, 100, 50, 25, 15, 10, 7.5, 6.5, 5, 4, 3, 2, 1.75, 1.5, 1.4, 1.3 , 1.2, 1.1],
+                    data_rate=[1],
                       finish=False)
         

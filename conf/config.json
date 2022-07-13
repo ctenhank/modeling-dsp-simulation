@@ -1,9 +1,0 @@
-{
-    "simulation": "wordcount",
-    "period": 1860,
-    "num-workers": 1,
-    "wc-num-source": 1,
-    "wc-num-split": 1,
-    "wc-num-count": 1,
-    "wc-data-size": 100
-}

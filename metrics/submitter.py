@@ -60,18 +60,18 @@ class DockerStormSubmitter:
         return ret[:-1]
     
 
-    def _wc_job(self, conf: dict, cap: float):
+    def _wc_job(self, conf: dict, cap: float, rate:int = 1):
         jar_path = '/jars/wc.jar'
-        topology_path = 'kr.ac.knu.sslab.storm.examples.topology.WordCountTopology'
+        topology_path = 'kr.ac.knu.sslab.storm.examples.topology.WordCountTopology2'
         num_worker = conf['num-workers']
         num_source = conf['wc-num-source']
         num_split = conf['wc-num-split']
         num_count = conf['wc-num-count']
         data_size = conf['wc-data-size']
         
-        topology_name = f'wc_{str(int(cap * 100))}_{data_size}_{num_worker}_{num_source}_{num_split}_{num_count}'
+        topology_name = f'wc_{str(int(cap * 100))}_{rate}_{data_size}_{num_worker}_{num_source}_{num_split}_{num_count}'
         self._executed_topology = topology_name
-        args = ['storm', 'jar', jar_path, topology_path, topology_name, num_worker, num_source, num_split, num_count, data_size]
+        args = ['storm', 'jar', jar_path, topology_path, topology_name, num_worker, num_source, num_split, num_count, data_size, rate]
         return self._command_parser(args)
     
     
@@ -82,7 +82,7 @@ class DockerStormSubmitter:
                 print(f'Succeed to kill the topology {self._executed_topology}')
                 
     
-    def _submit_job(self, conf: dict, cap: float):
+    def _submit_job(self, conf: dict, cap: float, rate: int):
         """_summary_
 
         Args:
@@ -92,7 +92,7 @@ class DockerStormSubmitter:
         if conf['simulation'] in DockerStormSubmitter.JOBS:
             command = None
             if conf['simulation'] == 'wordcount':
-                command = self._wc_job(conf, cap)
+                command = self._wc_job(conf, cap, rate)
                 
             if command is not None:
                 res = self._nimbus_cont.exec_run(command)
@@ -122,16 +122,17 @@ class DockerStormSubmitter:
     def _set_volume_path(self, conf):
         # Modified Storm config file(storm.yaml)
         conf['services']['nimbus']['volumes'][0] = str(Path.cwd() / 'conf' / 'storm' / 'storm.yaml') + ':/apache-storm-2.3.0/conf/storm.yaml' 
-        conf['services']['supervisor']['volumes'][0] = str(Path.cwd() / 'conf' / 'storm' / 'storm.yaml') + ':/apache-storm-2.3.0/conf/storm.yaml' 
+        conf['services']['supervisor']['volumes'][0] = str(Path.cwd() / 'conf' / 'storm' / 'storm.yaml') + ':/apache-storm-2.3.0/conf/storm.yaml'
+        conf['services']['supervisor']['volumes'][1] = str(Path.cwd() / 'data' / 'storm' / 'wordcount') + ':/data/storm/wordcount' 
         conf['services']['ui']['volumes'][0] = str(Path.cwd() / 'conf' / 'storm' / 'storm.yaml') + ':/apache-storm-2.3.0/conf/storm.yaml' 
         return conf
     
     
     def _wait_for_job(self, conf):
-        period = 630
+        #period = 1800
         if 'period' in conf.keys():
             period = conf['period']
-        
+        period = 300
         print(f'Started the job, the below is progress bar up to {period} seconds')
         for _ in tqdm(range(100), ncols=100, desc=f'Job Progress'):
             time.sleep(period / 100)
@@ -158,6 +159,7 @@ class DockerStormSubmitter:
             exec_conf,
             compose_path, 
             cpu_capacities,
+            data_rate,
             finish=True):
         """_summary_
 
@@ -192,15 +194,17 @@ class DockerStormSubmitter:
         print(f'Experiments starts... : total exp # {len(cpu_capacities)}')
         print('-' * 100)
         for cap in cpu_capacities:
-            print(f'Experiment {cnt}: CPU capability {cap}')
+            
             
             # Get supervisor name in the docker-compose
             self._update_supervisor_cpus(cap)
-            self._submit_job(exec_conf, cap)
-            self._wait_for_job(exec_conf) 
-            self._kill_job()
-            cnt += 1
-            print('-' * 100)
+            for rate in data_rate:
+                print(f'Experiment {cnt}: CPU capability {cap}, Data rate {rate}')
+                self._submit_job(exec_conf, cap, rate)
+                self._wait_for_job(exec_conf) 
+                self._kill_job()
+                cnt += 1
+                print('-' * 100)
         print('=' * 100)
                 
         if finish:

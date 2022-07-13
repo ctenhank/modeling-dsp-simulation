@@ -37,6 +37,7 @@ services:
 
     volumes:
       - ${PWD}/conf/storm.yaml:/conf/storm.yaml
+      - ${PWD}/data/storm/wordcount:/data/storm/wordcount
 
   ui:
     image: storm
